@@ -6,7 +6,11 @@ docker run --name redis -p 6379:6379 -d redis
 
 or set host & port to existing one
 
-TaskController
+and
+
+docker build -t async_task_proc .
+
+docker run -p 8080:8080 async_task_proc
 
 note:
-getTaskInfo returns progress if status not completed and task result (typos, position) when its 100%
+TaskController.getTaskInfo returns progress if status not completed and task result (typos, position) when its 100%
