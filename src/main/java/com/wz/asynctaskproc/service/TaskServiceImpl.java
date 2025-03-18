@@ -1,12 +1,15 @@
 package com.wz.asynctaskproc.service;
 
 import com.wz.asynctaskproc.enums.TaskStatus;
+import com.wz.asynctaskproc.exception.ErrorResponse;
 import com.wz.asynctaskproc.model.*;
 import com.wz.asynctaskproc.repository.ReactiveTasksRepository;
 import com.wz.asynctaskproc.service.status.TaskStatusResponseService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -22,12 +25,19 @@ public class TaskServiceImpl implements TaskService {
     private final TaskProcessor taskProcessor;
 
     private final TaskStatusResponseService taskStatusResponseService;
+    private final TaskMapper mapper;
 
     @Override
     public Mono<Object> createTask(TaskRequest taskRequest) {
 
         if (isTaskRequestValid(taskRequest)) {
             log.error("Invalid task input or pattern");
+
+            Task task = getTask(taskRequest, TaskStatus.ERROR);
+
+            tasksRepository.save(task)
+                    .doOnSuccess(taskProcessor::launchTask)
+                    .map(mapper::mapToTaskCreateResponse);
 
             return Mono.just(TaskCreateResponse.builder()
                     .input(taskRequest.getInput())
@@ -37,15 +47,11 @@ public class TaskServiceImpl implements TaskService {
                     .build());
         }
 
-        Task task = Task.builder()
-                .input(taskRequest.getInput())
-                .pattern(taskRequest.getPattern())
-                .status(TaskStatus.PENDING.toString())
-                .createdDate(Instant.now())
-                .build();
+        Task task = getTask(taskRequest, TaskStatus.PENDING);
+
         return tasksRepository.save(task)
                 .doOnSuccess(taskProcessor::launchTask)
-                .map(TaskMapper::mapToTaskCreateResponse);
+                .map(mapper::mapToTaskCreateResponse);
     }
 
     public Flux<Task> listTasks() {
@@ -61,9 +67,10 @@ public class TaskServiceImpl implements TaskService {
             return Mono.just(taskStatusResponse);
         }
 
-        // TODO if empty
         return tasksRepository.findById(id)
-                .map(TaskMapper::mapToTaskResult);
+                .map(mapper::mapToTaskResult)
+                .cast(Object.class)
+                .switchIfEmpty(Mono.just(new ErrorResponse("Task not found", id)));
     }
 
     private static boolean isStatusInProgress(TaskStatusResponse taskStatusResponse) {
@@ -72,8 +79,25 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private static boolean isTaskRequestValid(TaskRequest taskRequest) {
+        return notNullOrEmpty(taskRequest) && inputShorterThanPattern(taskRequest);
+    }
+
+    private static boolean inputShorterThanPattern(TaskRequest taskRequest) {
+        return taskRequest.getInput().length() <  taskRequest.getPattern().length();
+    }
+
+    private static boolean notNullOrEmpty(TaskRequest taskRequest) {
         return taskRequest == null || taskRequest.getInput() == null || taskRequest.getPattern() == null
                 || taskRequest.getInput().isEmpty() || taskRequest.getPattern().isEmpty();
+    }
+
+    private static Task getTask(TaskRequest taskRequest, TaskStatus error) {
+        return Task.builder()
+                .input(taskRequest.getInput())
+                .pattern(taskRequest.getPattern())
+                .status(error.toString())
+                .createdDate(Instant.now())
+                .build();
     }
 
 }

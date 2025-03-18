@@ -22,18 +22,13 @@ public class TaskStatusService extends RedisTemplateService {
         return redisTemplate.opsForValue().get(getKey(taskId));
     }
 
+    public void deleteTaskStatus(String taskId) {
+        redisTemplate.delete(getKey(taskId));
+    }
+
     @Override
     protected String getPrefix() {
         return PREFIX;
     }
 
 }
-
-// TODO
-//    public Mono<Void> storeTaskStatus(String taskId, TaskStatus status) {
-//        return Mono.fromRunnable(() -> redisTemplate.opsForValue().set(getKey(taskId), status.toString()));
-//    }
-//
-//    public Mono<String> retrieveTaskStatus(String taskId) {
-//        return Mono.justOrEmpty(redisTemplate.opsForValue().get(getKey(taskId)));
-//    }

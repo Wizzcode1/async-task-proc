@@ -19,6 +19,10 @@ public class TaskProgressService extends RedisTemplateService {
         return redisTemplate.opsForValue().get(getKey(taskId));
     }
 
+    public void deleteTaskProgress(String taskId) {
+        redisTemplate.delete(getKey(taskId));
+    }
+
     @Override
     protected String getPrefix() {
         return PREFIX;

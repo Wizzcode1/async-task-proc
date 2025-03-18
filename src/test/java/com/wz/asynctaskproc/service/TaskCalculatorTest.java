@@ -37,7 +37,7 @@ class TaskCalculatorTest {
     }
 
     @Test
-    void case1() {
+    void shouldFindExactMatchInMiddleOfString() {
         String input = "ABCD";
         String pattern = "BCD";
         Integer expectedPosition = 1;
@@ -49,7 +49,7 @@ class TaskCalculatorTest {
     }
 
     @Test
-    void case2() {
+    void shouldFindBestMatchWithOneTypo() {
         String input = "ABCD";
         String pattern = "BWD";
         Integer expectedPosition = 1;
@@ -61,7 +61,7 @@ class TaskCalculatorTest {
     }
 
     @Test
-    void case3() {
+    void shouldFindBestMatchNearEndOfString() {
         String input = "ABCDEFG";
         String pattern = "CFG";
         Integer expectedPosition = 4;
@@ -73,7 +73,7 @@ class TaskCalculatorTest {
     }
 
     @Test
-    void case4() {
+    void shouldFindFirstOccurrenceInRepeatingPattern() {
         String input = "ABCABC";
         String pattern = "ABC";
         Integer expectedPosition = 0;
@@ -85,7 +85,7 @@ class TaskCalculatorTest {
     }
 
     @Test
-    void case5() {
+    void shouldFindBestMatchWithMultipleTypos() {
         String input = "ABCDEFG";
         String pattern = "TDD";
         Integer expectedPosition = 1;
@@ -97,7 +97,7 @@ class TaskCalculatorTest {
     }
 
     @Test
-    void case6NoMatch() {
+    void shouldReturnNoMatchWhenPatternNotInInput() {
         String input = "ZXYZXYZXY";
         String pattern = "ABCD";
         Integer expectedPosition = -1;

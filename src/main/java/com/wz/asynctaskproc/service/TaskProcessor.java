@@ -3,7 +3,6 @@ package com.wz.asynctaskproc.service;
 import com.wz.asynctaskproc.enums.TaskStatus;
 import com.wz.asynctaskproc.model.MatchResult;
 import com.wz.asynctaskproc.model.Task;
-//import com.wz.asynctaskproc.repository.TasksRepository;
 import com.wz.asynctaskproc.repository.TasksRepository;
 import com.wz.asynctaskproc.service.status.TaskStatusService;
 import lombok.extern.slf4j.Slf4j;
@@ -35,17 +34,21 @@ public class TaskProcessor {
             try {
                 MatchResult result = taskCalculator.findBestMatch(task, task.getInput(), task.getPattern());
                 log.info("Task {} completed.", task.getId());
-                // TODO to debug
+                // debug
                 log.info("Task {} position: {} | Typos: {}", task.getId(), result.getPosition(), result.getTypos());
                 taskProcessStatusService.storeTaskStatus(task.getId(), TaskStatus.COMPLETED);
                 task.setTypos(result.getTypos());
                 task.setPosition(result.getPosition());
                 task.setStatus(TaskStatus.COMPLETED.toString());
                 tasksRepository.save(task);
+
+                taskProcessStatusService.deleteTaskStatus(task.getId());
             } catch (Exception e) {
                 log.error("Error processing task with id: {}", task.getId(), e);
                 taskProcessStatusService.storeTaskStatus(task.getId(), TaskStatus.ERROR);
                 task.setStatus(TaskStatus.ERROR.toString());
+
+                taskProcessStatusService.deleteTaskStatus(task.getId());
             }
         });
     }

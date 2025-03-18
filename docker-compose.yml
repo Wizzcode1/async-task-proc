@@ -1,0 +1,17 @@
+version: '3'
+services:
+  redis:
+    image: redis
+    container_name: "redis"
+    ports:
+      - "6379:6379"
+  mongodb:
+    image: mongo
+    container_name: "mongodb"
+    ports:
+      - "27017:27017"
+  asynctasks:
+    image: async_task_proc
+    container_name: "async_task_proc"
+    ports:
+      - "8080:8080"

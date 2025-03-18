@@ -29,19 +29,24 @@ public class TaskCalculator {
             int typos = countTypos(input, pattern, i);
             matches.add(new MatchResult(i, typos));
 
-            // TODO calculating progress can be more detailed
             stepsTaken++;
-            int progress = calculateProgress(stepsTaken, totalSteps);
-            emitter.emitEvent(new ProcessedTaskInfoEvent(task.getId(),  progress == 100 ? 99 : progress , TaskStatus.IN_PROGRESS));
-            log.info("Task {} progress: {}%", task.getId(), progress);
+            int newProgress = calculateProgress(stepsTaken, totalSteps);
 
-            // TODO FILLER FOR TESTING PURPOSES
+            if (stepsTaken == 1 || newProgress > calculateProgress(stepsTaken - 1, totalSteps)) {
+                emitter.emitEvent(new ProcessedTaskInfoEvent(task.getId(), newProgress, TaskStatus.IN_PROGRESS));
+                log.info("Task {} progress: {}%", task.getId(), newProgress);
+            }
+
+            // FILLER FOR TESTING PURPOSES
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+
+        emitter.emitEvent(new ProcessedTaskInfoEvent(task.getId(), 100, TaskStatus.COMPLETED));
+        log.info("Task {} is now COMPLETED", task.getId());
 
         MatchResult bestMatch = null;
         int minTypos = Integer.MAX_VALUE;
@@ -59,6 +64,7 @@ public class TaskCalculator {
         return bestMatch;
     }
 
+
     private int countTypos(String input, String pattern, int index) {
         int typos = 0;
         for (int i = 0; i < pattern.length(); i++) {
@@ -70,7 +76,9 @@ public class TaskCalculator {
     }
 
     private int calculateProgress(int stepsTaken, int totalSteps) {
-        return (int) Math.round(100.0 * stepsTaken / totalSteps);
+        if (totalSteps <= 0) return 100;
+        double progress = ((double) stepsTaken / totalSteps) * 100;
+        return Math.min(100, (int) Math.round(progress));
     }
 
 //    private int calculateProgress(int stepsTaken, int totalSteps) {
