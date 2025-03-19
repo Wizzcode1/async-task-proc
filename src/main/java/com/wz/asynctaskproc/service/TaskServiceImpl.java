@@ -5,6 +5,7 @@ import com.wz.asynctaskproc.exception.ErrorResponse;
 import com.wz.asynctaskproc.model.*;
 import com.wz.asynctaskproc.repository.ReactiveTasksRepository;
 import com.wz.asynctaskproc.service.status.TaskStatusResponseService;
+import io.micrometer.common.util.StringUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,14 +31,8 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public Mono<Object> createTask(TaskRequest taskRequest) {
 
-        if (isTaskRequestValid(taskRequest)) {
+        if (isTaskRequestInvalid(taskRequest)) {
             log.error("Invalid task input or pattern");
-
-            Task task = getTask(taskRequest, TaskStatus.ERROR);
-
-            tasksRepository.save(task)
-                    .doOnSuccess(taskProcessor::launchTask)
-                    .map(mapper::mapToTaskCreateResponse);
 
             return Mono.just(TaskCreateResponse.builder()
                     .input(taskRequest.getInput())
@@ -78,17 +73,15 @@ public class TaskServiceImpl implements TaskService {
                 taskStatusResponse.getStatus().equals(TaskStatus.IN_PROGRESS.toString());
     }
 
-    private static boolean isTaskRequestValid(TaskRequest taskRequest) {
-        return notNullOrEmpty(taskRequest) && inputShorterThanPattern(taskRequest);
+    private static boolean isTaskRequestInvalid(TaskRequest taskRequest) {
+        return taskRequest == null
+                || StringUtils.isBlank(taskRequest.getInput())
+                || StringUtils.isBlank(taskRequest.getPattern())
+                || inputShorterThanPattern(taskRequest);
     }
 
     private static boolean inputShorterThanPattern(TaskRequest taskRequest) {
-        return taskRequest.getInput().length() <  taskRequest.getPattern().length();
-    }
-
-    private static boolean notNullOrEmpty(TaskRequest taskRequest) {
-        return taskRequest == null || taskRequest.getInput() == null || taskRequest.getPattern() == null
-                || taskRequest.getInput().isEmpty() || taskRequest.getPattern().isEmpty();
+        return taskRequest.getInput().length() < taskRequest.getPattern().length();
     }
 
     private static Task getTask(TaskRequest taskRequest, TaskStatus error) {
